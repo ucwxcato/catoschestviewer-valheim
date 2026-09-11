@@ -1,0 +1,88 @@
+# Build output and test artifacts
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# Local Valheim/BepInEx reference assemblies
+lib/*.dll
+lib/*.xml
+
+# IDE/editor state
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+_ReSharper*/
+*.resharper
+*.csproj.user
+
+# NuGet/package caches and local tooling
+packages/
+*.nupkg
+*.snupkg
+*.tmp
+*.temp
+*.cache
+.nuget/
+
+# Local Valheim/BepInEx runtime state
+BepInEx/
+doorstop_libs/
+winhttp.dll
+doorstop_log.txt
+LogOutput.log
+*.log
+config/
+plugins/
+patchers/
+cache/
+
+# Local test server, saves, worlds, and runtime state
+TEST_SERVER/
+worlds/
+worlds_local/
+characters/
+characters_local/
+saves/
+*.db
+*.db.old
+*.fwl
+*.fwl.old
+*.old
+*.bak
+*.backup
+*.dmp
+
+# Valheim server identity/access lists and local server configuration
+adminlist.txt
+permittedlist.txt
+bannedlist.txt
+*.local.cfg
+*.private.cfg
+*.local.json
+*.private.json
+
+# Secrets and environment files
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.pfx
+*.key
+
+# Recoverable live-server snapshots
+.server-wipe-backup-*/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
