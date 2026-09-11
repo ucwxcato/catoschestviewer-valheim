@@ -20,6 +20,7 @@ $resolvedDestination = (Resolve-Path -LiteralPath $destination).Path
 $gameReferences = @(
     'UnityEngine.dll',
     'UnityEngine.CoreModule.dll',
+    'UnityEngine.UI.dll',
     'Unity.TextMeshPro.dll',
     'assembly_valheim.dll',
     'assembly_utils.dll'

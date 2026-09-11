@@ -64,6 +64,11 @@ src/CatosChestViewer/bin/Release/net48/net48/CatosChestViewer.dll
 Use a repository build script once the project is scaffolded. A release build
 is not gameplay verification; record both separately.
 
+The bootstrap config is generated at
+`BepInEx/config/com.catosaur.catoschestviewer.cfg`. The local test launcher
+seeds it from `TEST_SERVER/com.catosaur.catoschestviewer.cfg` only when the
+client profile does not already have one; it does not overwrite player tuning.
+
 ## Local test server
 
 Use an ignored `TEST_SERVER/` harness based on
@@ -80,7 +85,7 @@ Use an ignored `TEST_SERVER/` harness based on
 - Use an isolated save directory and world, port `2462`, password `696969`,
   and `-public 0` unless the plan is deliberately changed.
 - For the current test setup, use the repository-local copied world at
-  `TEST_SERVER\world` with `-world "Dedicated"`; do not depend on
+  `TEST_SERVER\world\worlds_local\Dedicated.db/.fwl` with `-world "Dedicated"`; do not depend on
   `C:\Users\magni\Downloads\Dedicated` at runtime.
 - Copy `TEST_SERVER/adminlist.txt` into the active save directory before
   launch. For Valheim 1.0, every entry must use `V_<steamid64>`, for example

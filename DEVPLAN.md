@@ -1,8 +1,8 @@
 # CatosChestViewer — Development Plan
 
-> **Status:** Phase 0 API reconnaissance and compile gate verified against the
-> installed client assembly; bootstrap build is verified, gameplay behavior is
-> not yet verified.
+> **Status:** Phase 0 and the Phase 1 scaffold are complete. Phase 2 targeting,
+> read, formatting, and native-HUD integration are implemented, compiled, and
+> deployed to the client profile. Gameplay behavior is not yet verified.
 >
 > **Purpose:** Show the contents of the chest currently under the local
 > player's crosshair as simple text without opening the chest.
@@ -100,7 +100,8 @@ display clears safely
   entries. The test identity is `V_76561198062587799` unless the local owner
   changes it. The admin list is harness parity only and is not an MVP
   authorization dependency.
-- The test fixture world is copied into `TEST_SERVER/world` and launched as
+- The test fixture world is copied into
+  `TEST_SERVER/world/worlds_local/Dedicated.db/.fwl` and launched as
   `-world "Dedicated"` from that repository-local save directory. The launcher
   must not depend on the original Downloads location.
 
@@ -115,7 +116,8 @@ display clears safely
   longer a supported container.
 - Work in single-player and multiplayer with the same client-side behavior.
 - Provide a reproducible net48 build and isolated dedicated-server smoke test.
-- Provide configurable enable/range/update/display settings with safe defaults.
+- Provide configurable enable/update/display settings with safe defaults;
+  interaction range remains Valheim-native.
 
 ### Explicitly out of scope
 
@@ -231,7 +233,6 @@ Proposed config file: `BepInEx/config/com.catosaur.catoschestviewer.cfg`.
 ```ini
 [General]
 Enabled = true
-MaxDistance = 5
 UpdateIntervalMs = 100
 MaxLines = 30
 MaxTextCharacters = 1200
@@ -317,11 +318,11 @@ world, or log files.
 
 ### Phase 1 — Project and test-server scaffold
 
-- [ ] Add `src/CatosChestViewer/CatosChestViewer.csproj` with net48, assembly
+- [x] Add `src/CatosChestViewer/CatosChestViewer.csproj` with net48, assembly
   metadata, and non-copy-local references to `lib/`.
-- [ ] Add `Plugin.cs`, `ModConfig.cs`, `scripts/setup-references.ps1`, and
+- [x] Add `Plugin.cs`, `ModConfig.cs`, `scripts/setup-references.ps1`, and
   `scripts/build.ps1` following the sibling conventions.
-- [ ] Add `.gitignore` entries for `TEST_SERVER/`, build output, references,
+- [x] Add `.gitignore` entries for `TEST_SERVER/`, build output, references,
   save data, logs, and `adminlist.txt`.
 - [x] Add ignored `TEST_SERVER/README.md`, client-only launcher, repository-local
   `TEST_SERVER/world` fixture, config template,
@@ -332,18 +333,22 @@ world, or log files.
   `Dedicated` world from `TEST_SERVER/world` by default.
 - [x] Add the client-process guard and configure the launcher so the server
   never receives the plugin DLL.
+- [x] Add the BepInEx config bindings and seed a missing client config from the
+  repository test template without overwriting an existing client config.
 - [ ] **Verify:** build the bootstrap and run the launcher; confirm only the
   client profile contains the deployed plugin.
-- [ ] **Verify:** clean Release build succeeds; launcher negative checks fail
-  clearly; no reference DLL or live server state is tracked.
+- [x] **Verify:** clean Release build succeeds; local reference DLLs and live
+  test-server state are ignored; static launcher checks show client-only
+  deployment and repository-local world usage.
 
 ### Phase 2 — Read-only chest targeting and formatting
 
-- [ ] Implement `ChestTargetController` with bounded cadence, camera raycast,
-  chest resolution, target identity, range checks, and invalidation.
-- [ ] Implement `ChestInventoryReader` using only confirmed read APIs; preserve
+- [x] Implement `ChestTargetController` with bounded cadence, native
+  `Player.GetHoverObject()` chest resolution, target identity, range checks,
+  and invalidation.
+- [x] Implement `ChestInventoryReader` using only confirmed read APIs; preserve
   slot order, omit empty slots, and return an immutable display snapshot.
-- [ ] Implement `ChestTextFormatter` with item display names, stack counts,
+- [x] Implement `ChestTextFormatter` with item display names, stack counts,
   header/empty text, line and character limits, and safe fallback names.
 - [ ] Add unit-level tests for empty slots, malformed/null items, duplicate
   item names, truncation, and stable fingerprints where the API permits.
@@ -352,10 +357,10 @@ world, or log files.
 
 ### Phase 3 — Overlay lifecycle and integration hardening
 
-- [ ] Implement one local `ChestOverlay` instance with atomic text replacement,
+- [x] Implement one local `ChestOverlay` instance with atomic text replacement,
   clear/hide behavior, and plugin/scene disposal.
-- [ ] Wire target changes and inventory fingerprints to redraw only when needed.
-- [ ] Add throttled diagnostics for unsupported objects and repeated read
+- [x] Wire target changes and inventory fingerprints to redraw only when needed.
+- [x] Add throttled diagnostics for unsupported objects and repeated read
   failures without logging contents.
 - [ ] Verify multiplayer behavior with a matching but unmodded dedicated
   server and one or more modded clients; confirm other clients do not need the

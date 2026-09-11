@@ -1,4 +1,6 @@
 using BepInEx;
+using BepInEx.Logging;
+using HarmonyLib;
 
 namespace CatosChestViewer
 {
@@ -10,9 +12,25 @@ namespace CatosChestViewer
         public const string Name = "Catos Chest Viewer";
         public const string Version = "0.1.0";
 
+        internal static ManualLogSource Log { get; private set; }
+
+        private Harmony _harmony;
+
         private void Awake()
         {
-            Logger.LogInfo($"{Name} {Version} bootstrap loaded. Chest display is not implemented yet.");
+            Log = Logger;
+            ModConfig.Bind(Config);
+
+            _harmony = new Harmony(Guid);
+            _harmony.PatchAll(typeof(ChestViewerPatches));
+
+            Logger.LogInfo($"{Name} {Version} client-only loaded.");
+        }
+
+        private void OnDestroy()
+        {
+            ChestOverlay.Clear();
+            _harmony?.UnpatchAll(Guid);
         }
     }
 }
