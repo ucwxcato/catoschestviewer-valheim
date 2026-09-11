@@ -100,10 +100,11 @@ display clears safely
   entries. The test identity is `V_76561198062587799` unless the local owner
   changes it. The admin list is harness parity only and is not an MVP
   authorization dependency.
-- The test fixture world is copied into
-  `TEST_SERVER/world/worlds_local/Dedicated.db/.fwl` and launched as
-  `-world "Dedicated"` from that repository-local save directory. The launcher
-  must not depend on the original Downloads location.
+- The test harness uses the existing Valheim 1.0 `Dedicated` world directory at
+  `C:\Users\magni\Downloads\Dedicated`, exposed at
+  `C:\Users\magni\Downloads\worlds_local\Dedicated` through a directory
+  junction. It launches with `-savedir "C:\Users\magni\Downloads"` and
+  `-world "Dedicated"`; the launcher must not copy or regenerate this world.
 
 ## 2. Goals and non-goals
 
@@ -324,13 +325,14 @@ world, or log files.
   `scripts/build.ps1` following the sibling conventions.
 - [x] Add `.gitignore` entries for `TEST_SERVER/`, build output, references,
   save data, logs, and `adminlist.txt`.
-- [x] Add ignored `TEST_SERVER/README.md`, client-only launcher, repository-local
-  `TEST_SERVER/world` fixture, config template,
+- [x] Add ignored `TEST_SERVER/README.md`, client-only launcher, external
+  `Dedicated` world save path, config template,
   `adminlist.example.txt`, and local `adminlist.txt` using `V_76561198062587799`.
 - [x] Make the launcher rebuild, deploy the DLL only to the CatosChestViewer
   r2modman client profile, copy the admin list to the active `-savedir`, check
-  the server assembly age, stop on a locked client, and launch the copied
-  `Dedicated` world from `TEST_SERVER/world` by default.
+  the server assembly age, stop on a locked client, and launch the existing
+  `Dedicated` world from `C:\Users\magni\Downloads\Dedicated` through the
+  Valheim `worlds_local` junction by default.
 - [x] Add the client-process guard and configure the launcher so the server
   never receives the plugin DLL.
 - [x] Add the BepInEx config bindings and seed a missing client config from the
@@ -339,7 +341,7 @@ world, or log files.
   client profile contains the deployed plugin.
 - [x] **Verify:** clean Release build succeeds; local reference DLLs and live
   test-server state are ignored; static launcher checks show client-only
-  deployment and repository-local world usage.
+  deployment and use of the existing external world.
 
 ### Phase 2 — Read-only chest targeting and formatting
 
@@ -370,14 +372,14 @@ world, or log files.
 
 ### Phase 4 — Packaging and release gate
 
-- [ ] Add `thunderstore/manifest.json`, icon, README, and changelog with the
+- [x] Add `thunderstore/manifest.json`, icon, README, and changelog with the
   BepInExPack Valheim `5.4.2350` dependency.
-- [ ] Add `scripts/package.ps1` to build, validate semantic version alignment,
+- [x] Add `scripts/package.ps1` to build, validate semantic version alignment,
   stage only release files, archive, and print SHA-256.
 - [ ] Run the isolated test launcher from a clean r2modman profile and verify
   the active save directory contains the `V_...` admin entry while the server
   plugin directory does not contain `CatosChestViewer.dll`.
-- [ ] Inspect the archive for absence of `lib/*.dll`, `TEST_SERVER/`, worlds,
+- [x] Inspect the archive for absence of `lib/*.dll`, `TEST_SERVER/`, worlds,
   logs, configs containing secrets, and build intermediates.
 - [ ] **Verify:** only then mark implementation checkboxes complete and publish
   the package.

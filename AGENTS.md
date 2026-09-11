@@ -82,11 +82,18 @@ Use an ignored `TEST_SERVER/` harness based on
 - Refuse to launch when Valheim is running and locking the client DLL.
 - Refuse to launch when the server game assembly is older than the refreshed
   local reference.
-- Use an isolated save directory and world, port `2462`, password `696969`,
-  and `-public 0` unless the plan is deliberately changed.
-- For the current test setup, use the repository-local copied world at
-  `TEST_SERVER\world\worlds_local\Dedicated.db/.fwl` with `-world "Dedicated"`; do not depend on
-  `C:\Users\magni\Downloads\Dedicated` at runtime.
+- Use the configured test save directory and world, port `2462`, password
+  `696969`, and `-public 0` unless the plan is deliberately changed.
+- For the current test setup, use the existing Valheim 1.0 world directory at
+  `C:\Users\magni\Downloads\Dedicated`, exposed as
+  `C:\Users\magni\Downloads\worlds_local\Dedicated` through a directory
+  junction. Launch with `-savedir "C:\Users\magni\Downloads"` and
+  `-world "Dedicated"`; do not copy or regenerate this world.
+- Valheim 1.0 resolves a world as `<savedir>\worlds_local\<world>`. The
+  `Dedicated` source directory contains the `.db2`, `.fwl2`, `.chunk`, and
+  marker files directly; it is not itself a valid `-savedir`. Never point
+  `-savedir` at `C:\Users\magni\Downloads\Dedicated`, and never create a
+  second generated world inside that source directory.
 - Copy `TEST_SERVER/adminlist.txt` into the active save directory before
   launch. For Valheim 1.0, every entry must use `V_<steamid64>`, for example
   `V_76561198062587799`.

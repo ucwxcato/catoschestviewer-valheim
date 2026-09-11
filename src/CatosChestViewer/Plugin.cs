@@ -27,6 +27,14 @@ namespace CatosChestViewer
             Logger.LogInfo($"{Name} {Version} client-only loaded.");
         }
 
+        // Run after Valheim's normal UpdateCrosshair/UI work. This keeps the
+        // display alive even when another HUD postfix runs after our Harmony
+        // patch and replaces the native hover text.
+        private void LateUpdate()
+        {
+            ChestOverlay.Apply(Hud.instance, Player.m_localPlayer);
+        }
+
         private void OnDestroy()
         {
             ChestOverlay.Clear();

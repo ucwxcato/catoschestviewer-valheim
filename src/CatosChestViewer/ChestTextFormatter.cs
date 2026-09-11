@@ -7,6 +7,9 @@ namespace CatosChestViewer
     internal static class ChestTextFormatter
     {
         private static readonly Regex RichTextTag = new Regex("<[^>]*>", RegexOptions.Compiled);
+        private const string HeaderColor = "#FFD166FF";
+        private const string NameColor = "#F2F5FFFF";
+        private const string CountColor = "#7CFFB2FF";
 
         internal static string Format(Container container, ChestContentsSnapshot snapshot)
         {
@@ -17,19 +20,23 @@ namespace CatosChestViewer
             var lines = new StringBuilder();
 
             if (ModConfig.ShowHeader.Value)
-                AppendLine(lines, Clean(ChestInventoryReader.Localize(container.GetHoverName())), maxCharacters);
+            {
+                string header = Clean(ChestInventoryReader.Localize(container.GetHoverName()));
+                AppendLine(lines, $"<color={HeaderColor}><b>{EscapeRichText(header)}</b></color>", maxCharacters);
+            }
 
             int itemLines = 0;
             foreach (ChestItemEntry item in snapshot.Items)
             {
                 if (itemLines >= maxLines) break;
-                string line = $"{Clean(item.Name)} x{Math.Max(0, item.Stack)}";
+                string itemName = EscapeRichText(Clean(item.Name));
+                string line = $"<color={NameColor}>{itemName}</color> <color={CountColor}><b>x{Math.Max(0, item.Stack)}</b></color>";
                 if (!AppendLine(lines, line, maxCharacters)) break;
                 itemLines++;
             }
 
             if (snapshot.Items.Count == 0 && ModConfig.ShowEmptyMessage.Value)
-                AppendLine(lines, Clean(ModConfig.EmptyMessage.Value), maxCharacters);
+                AppendLine(lines, $"<color={CountColor}>{EscapeRichText(Clean(ModConfig.EmptyMessage.Value))}</color>", maxCharacters);
 
             return lines.ToString().TrimEnd('\r', '\n');
         }
@@ -51,6 +58,13 @@ namespace CatosChestViewer
                 .Replace('\r', ' ')
                 .Replace('\n', ' ')
                 .Trim();
+        }
+
+        private static string EscapeRichText(string value)
+        {
+            return value.Replace("&", "&amp;")
+                .Replace("<", "&lt;")
+                .Replace(">", "&gt;");
         }
     }
 }

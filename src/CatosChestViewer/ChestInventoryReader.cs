@@ -32,12 +32,9 @@ namespace CatosChestViewer
 
     internal static class ChestInventoryReader
     {
-        private static readonly Type LocalizationType = typeof(Container).Assembly.GetType("Localization");
-        private static readonly PropertyInfo LocalizationInstance = LocalizationType?.GetProperty(
-            "instance", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo LocalizeMethod = LocalizationType?.GetMethod(
-            "Localize", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
-            null, new[] { typeof(string) }, null);
+        private static Type _localizationType;
+        private static PropertyInfo _localizationInstance;
+        private static MethodInfo _localizeMethod;
         private static float _nextReadWarningTime;
 
         internal static bool TryRead(Container container, out ChestContentsSnapshot snapshot)
@@ -91,16 +88,54 @@ namespace CatosChestViewer
 
             try
             {
-                object localization = LocalizationInstance?.GetValue(null, null);
-                if (localization != null && LocalizeMethod != null)
-                    return LocalizeMethod.Invoke(localization, new object[] { value }) as string ?? value;
+                EnsureLocalizationApi();
+                object localization = _localizationInstance?.GetValue(null, null);
+                if (localization != null && _localizeMethod != null)
+                {
+                    string localized = _localizeMethod.Invoke(localization, new object[] { value }) as string;
+                    if (!string.IsNullOrWhiteSpace(localized) && localized != value)
+                        return localized;
+                }
             }
             catch (Exception ex)
             {
                 Plugin.Log?.LogWarning($"Item localization failed: {ex.Message}");
             }
 
-            return value;
+            return HumanizeKey(value);
+        }
+
+        private static void EnsureLocalizationApi()
+        {
+            if (_localizationType != null) return;
+
+            // Localization is defined by assembly_guiutils, not
+            // assembly_valheim. Resolve it lazily because guiutils may not be
+            // loaded yet when the plugin's Awake method runs.
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                Type type = assembly.GetType("Localization", false);
+                if (type == null) continue;
+
+                _localizationType = type;
+                _localizationInstance = type.GetProperty(
+                    "instance", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                _localizeMethod = type.GetMethod(
+                    "Localize", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+                    null, new[] { typeof(string) }, null);
+                return;
+            }
+        }
+
+        private static string HumanizeKey(string value)
+        {
+            string key = value.Trim();
+            if (key.StartsWith("$", StringComparison.Ordinal)) key = key.Substring(1);
+            if (key.StartsWith("item_", StringComparison.OrdinalIgnoreCase)) key = key.Substring(5);
+            if (key.StartsWith("piece_", StringComparison.OrdinalIgnoreCase)) key = key.Substring(6);
+            key = key.Replace('_', ' ').Trim();
+            if (key.Length == 0) return "Unknown item";
+            return char.ToUpperInvariant(key[0]) + key.Substring(1);
         }
     }
 }

@@ -21,14 +21,18 @@ namespace CatosChestViewer
             GameObject hoverObject = player.GetHoverObject();
             if (!hoverObject) return false;
 
-            Container candidate = hoverObject.GetComponentInParent<Container>();
-            if (!candidate || !IsAccessible(candidate)) return false;
+            // Valheim stores the collider and Container on different prefab
+            // levels depending on the container type. Search both directions
+            // around the native hover object.
+            Container candidate = hoverObject.GetComponentInParent<Container>()
+                ?? hoverObject.GetComponentInChildren<Container>(true);
+            if (!candidate || !IsAccessible(candidate, player.GetPlayerID())) return false;
 
             container = candidate;
             return true;
         }
 
-        private static bool IsAccessible(Container container)
+        private static bool IsAccessible(Container container, long playerId)
         {
             try
             {
@@ -46,12 +50,7 @@ namespace CatosChestViewer
                     return false;
                 }
 
-                Game game = Game.instance;
-                if (!game) return false;
-                PlayerProfile profile = game.GetPlayerProfile();
-                if (profile == null) return false;
-
-                object result = CheckAccessMethod.Invoke(container, new object[] { profile.GetPlayerID() });
+                object result = CheckAccessMethod.Invoke(container, new object[] { playerId });
                 return result is bool allowed && allowed;
             }
             catch (Exception ex)
