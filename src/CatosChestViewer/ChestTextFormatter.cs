@@ -38,7 +38,10 @@ namespace CatosChestViewer
             {
                 if (itemLines >= maxLines) break;
                 string itemName = EscapeRichText(Clean(item.Name));
-                string line = $"<color={NameColor}>{itemName}</color> <color={CountColor}><b>x{Math.Max(0, item.Stack)}</b></color>";
+                string stackDetail = ModConfig.ShowStackCount.Value && item.SourceStackCount > 1
+                    ? $" ({item.SourceStackCount} stacks)"
+                    : string.Empty;
+                string line = $"<color={NameColor}>{itemName}</color> <color={CountColor}><b>x{Math.Max(0, item.Stack)}</b></color>{stackDetail}";
                 if (!AppendLine(lines, line, maxCharacters)) break;
                 itemLines++;
             }

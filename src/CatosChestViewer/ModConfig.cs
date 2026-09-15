@@ -9,6 +9,7 @@ namespace CatosChestViewer
         internal static ConfigEntry<int> MaxLines;
         internal static ConfigEntry<int> MaxTextCharacters;
         internal static ConfigEntry<bool> ShowHeader;
+        internal static ConfigEntry<bool> ShowStackCount;
         internal static ConfigEntry<bool> ShowEmptyMessage;
         internal static ConfigEntry<string> EmptyMessage;
 
@@ -27,6 +28,8 @@ namespace CatosChestViewer
                     new AcceptableValueRange<int>(100, 4096)));
             ShowHeader = config.Bind("Display", "ShowHeader", true,
                 "Show the chest name above the contents.");
+            ShowStackCount = config.Bind("Display", "ShowStackCount", true,
+                "Show how many source stacks contributed to aggregated item rows.");
             ShowEmptyMessage = config.Bind("Display", "ShowEmptyMessage", true,
                 "Show Empty when the targeted chest has no items.");
             EmptyMessage = config.Bind("Display", "EmptyMessage", "Empty",

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2 - 2026-09-15
+
+- Added configurable source-stack details to aggregated item rows.
+- Aggregated rows now show details such as `(3 stacks)` when enabled.
+
 ## 0.1.1 - 2026-09-15
 
 - Added used-slot/total-slot counts to the chest hover header.

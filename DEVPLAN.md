@@ -84,12 +84,15 @@ display clears safely
 - Targeting is based on the local player's look ray/crosshair and a bounded
   interaction range, using Valheim's already-computed
   `Player.GetHoverObject()` result rather than a second periodic raycast.
-- The MVP supports vanilla `Container` chests and any compatible chest that
-  exposes Valheim's normal `Container` inventory. Unsupported custom storage
-  types are ignored safely.
+- The MVP supports vanilla `Container` chests and any compatible modded
+  container that exposes Valheim's normal `Container` inventory and access
+  behavior. Unsupported custom storage types are ignored safely and must be
+  documented after compatibility testing.
 - The display shows the used-slot/total-slot count, item display names, and
-  stack quantities; empty slots are omitted. Item rows are alphabetical by
-  localized display name for quick scanning.
+  stack quantities; empty slots are omitted. Duplicate item stacks are
+  aggregated into one row with the total quantity, while optional source-stack
+  detail can remain visible. Item rows are alphabetical by localized display
+  name by default, with configurable quantity sorting.
 - The display replaces the normal native `Hud.m_hoverName` hover text after
   `Hud.UpdateCrosshair` runs. It is not chat spam, world-space floating text,
   or a chest UI replacement.
@@ -126,9 +129,11 @@ display clears safely
 - Opening, remotely looting, locking, sorting, transferring, or editing chests.
 - Server-side inventory replication or a new network protocol.
 - Admin-only visibility, admin commands, or bypasses.
-- Other containers such as player inventory, carts, boats, tombstones,
-  crafting stations, or custom mod storage unless compatibility is explicitly
-  added after the MVP.
+- Player inventory, tombstones, crafting stations, and unrelated custom
+  storage remain out of scope. Native containers such as carts, boats, and
+  modded iron chests are supported only where they expose a compatible
+  `Container`; each supported type must be confirmed in gameplay testing and
+  documented accordingly.
 - Item icons, rarity colors, search, filtering, localization authoring,
   pagination, minimaps, ESP, wallhack behavior, or distance bypasses.
 - Persistent chest indexing, database storage, analytics, or Discord output.
@@ -145,10 +150,11 @@ display clears safely
    before reading its inventory. Inaccessible chests retain vanilla hover text
    and never expose contents.
 4. The controller reads the container inventory on the main Unity thread,
-   groups nothing by default, displays `UsedSlots/TotalSlots`, and formats
-   non-empty slots alphabetically as `Name xCount`.
+   aggregates duplicate stacks, displays `UsedSlots/TotalSlots`, and formats
+   non-empty rows according to the configured sort mode as `Name xTotal`.
 5. A stable target identity plus a lightweight inventory fingerprint prevents
-   unnecessary redraws while still refreshing when contents change.
+   unnecessary redraws while still refreshing when contents, slot counts, or
+   display-relevant configuration changes.
 6. The native `Hud.m_hoverName` text is replaced atomically with the chest
    listing. On target loss,
    destruction, exception, or scene transition it is cleared and the cached
@@ -173,8 +179,8 @@ src/CatosChestViewer/
   Plugin.cs                 BepInEx entry point and lifecycle
   ModConfig.cs              Configuration bindings and defaults
   ChestTargetController.cs  Native hover target, identity, invalidation, cadence
-  ChestInventoryReader.cs   Safe Container/inventory read and fingerprint
-  ChestTextFormatter.cs     Alphabetical item rows, slot usage, names, counts, truncation
+  ChestInventoryReader.cs   Safe Container/inventory read, aggregation, and fingerprint
+  ChestTextFormatter.cs     Aggregated rows, configurable sorting/detail, slot usage, names, counts, truncation
   ChestOverlay.cs           Native Hud.m_hoverName patch and text ownership
   CatosChestViewer.csproj   net48 references and assembly metadata
 scripts/
@@ -244,6 +250,10 @@ MaxTextCharacters = 1200
 ShowHeader = true
 ShowEmptyMessage = true
 EmptyMessage = Empty
+ShowSlotCount = true
+SortMode = Alphabetical
+ShowStackCount = true
+ShowMalformedItems = false
 ```
 
 The native interaction distance and HUD placement are confirmed in Phase 0;
@@ -252,6 +262,21 @@ the MVP should not introduce an independent `MaxDistance` or custom UI anchor.
 values clamp to safe bounds and are logged once. Config reload is optional for
 MVP; if added, it must marshal changes to the main thread and restore native
 hover text safely.
+
+Display configuration semantics:
+
+- `ShowHeader` controls whether the localized container name appears above the
+  contents.
+- `ShowSlotCount` controls whether used/total slots appear in the header.
+- `SortMode` supports `Alphabetical` (the default) and
+  `QuantityDescending`.
+- Duplicate stacks are always aggregated for the primary quantity. When
+  `ShowStackCount` is enabled and an item came from multiple source stacks, the
+  row may include a detail suffix such as `(2 stacks)`.
+- `ShowMalformedItems` defaults to false. When enabled, null or malformed
+  inventory entries are represented as `Unknown item` with a safe count or
+  placeholder. They are never dereferenced after the read and are not logged
+  with inventory contents.
 
 There is no permission gate for the read-only display. The client-only test
 server still uses the sibling project's admin setup for operational
@@ -289,12 +314,15 @@ world, or log files.
 | Scenario | Expected result | Evidence required |
 |---|---|---|
 | Aim at a populated vanilla chest | Names/counts appear without opening it | Manual client smoke test/video or notes; log shows plugin loaded |
+| Duplicate stacks in one container | One row shows the summed quantity; optional stack detail is correct | Manual check with split stacks |
 | Aim at an empty chest | Empty message or header-only result per config | Manual check |
 | Look at ground/player/non-container | Overlay is hidden/cleared | Manual check |
 | Move beyond configured range | Overlay clears | Manual check |
 | Change contents while tracking | Text refreshes without opening/closing overlay | Manual multiplayer or controlled test |
 | Destroy chest/leave scene | No exception; overlay clears | Manual check plus clean BepInEx log |
-| Unsupported/custom container | Safely ignored or explicitly supported | Test result and log review |
+| Native modded container (for example modded iron chest) | Displays correctly if it exposes compatible `Container` behavior; otherwise safely ignored | Per-mod gameplay test and compatibility note |
+| Malformed/null inventory entry | No exception or stale data; hidden by default or shown as `Unknown item` when configured | Controlled test or unit-level test |
+| Display configuration variants | Name, slot count, sorting, stack detail, and malformed-item options match config | Manual config matrix |
 | Two clients target chests | Each client sees only its own local target | Two-client test; no new RPCs |
 | Repeated malformed/read failures | Game continues; warning is throttled | Log inspection |
 | Server launch/admin format | Server starts with active-save `V_...` admin file | Launcher output and save-dir file evidence |
@@ -353,13 +381,24 @@ world, or log files.
 - [x] Implement `ChestInventoryReader` using only confirmed read APIs; record
   used/total grid slots, omit empty slots, sort item rows alphabetically, and
   return an immutable display snapshot.
+- [x] Extend `ChestInventoryReader` to aggregate duplicate item stacks and
+  retain source-stack counts safely.
+- [ ] Extend `ChestInventoryReader` to preserve malformed-entry information,
+  sort rows according to configuration, and include slot counts in the stable
+  fingerprint.
 - [x] Implement `ChestTextFormatter` with item display names, stack counts,
   slot-usage header/empty text, line and character limits, and safe fallback
   names.
+- [x] Extend `ChestTextFormatter` with aggregated quantities and optional
+  source-stack detail.
+- [ ] Extend `ChestTextFormatter` with configurable name/slot visibility, sort
+  mode, and malformed-item display.
+- [x] Add the `ShowStackCount` config entry for source-stack detail.
+- [ ] Add remaining compact display config entries for slot count, sort mode,
+  and malformed-entry visibility.
 - [ ] Add unit-level tests for empty slots, malformed/null items, duplicate
-  item names, truncation, and stable fingerprints where the API permits.
-- [ ] **Verify:** populated and empty chests render in a local client while
-  chest state remains unchanged.
+  item names, duplicate stacks, configured sorting, truncation, malformed-item
+  display, and stable fingerprints including slot counts where the API permits.
 
 ### Phase 3 — Overlay lifecycle and integration hardening
 
@@ -392,6 +431,11 @@ world, or log files.
 
 - [ ] Confirm final overlay anchor, font size, color, and whether the header
   includes the chest name.
+- [ ] Tune aggregated-row wording, optional source-stack detail, quantity sort,
+  and malformed-item placeholder after manual testing.
+- [ ] Test native modded containers that expose `Container` (including the
+  current modded iron-chest target) and document which ones work; do not claim
+  broad custom-storage support from type inspection alone.
 - [ ] Tune update interval, distance, maximum lines, and character cap after
   profiling on a populated world.
 - [ ] Decide whether localized item names should use Valheim's localization

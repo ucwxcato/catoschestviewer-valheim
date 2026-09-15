@@ -24,14 +24,16 @@ namespace CatosChestViewer
 
     internal sealed class ChestItemEntry
     {
-        internal ChestItemEntry(string name, int stack)
+        internal ChestItemEntry(string name, int stack, int sourceStackCount)
         {
             Name = name;
             Stack = stack;
+            SourceStackCount = sourceStackCount;
         }
 
         internal string Name { get; }
         internal int Stack { get; }
+        internal int SourceStackCount { get; }
     }
 
     internal static class ChestInventoryReader
@@ -76,18 +78,43 @@ namespace CatosChestViewer
         {
             if (items == null || items.Count == 0) return "empty";
 
-            var fingerprint = new StringBuilder();
+            var aggregateByName = new Dictionary<string, AggregateEntry>(StringComparer.Ordinal);
             foreach (ItemDrop.ItemData item in items)
             {
                 if (item == null || item.m_shared == null) continue;
 
                 string name = item.m_shared.m_name ?? string.Empty;
-                int stack = item.m_stack;
-                entries.Add(new ChestItemEntry(Localize(name), stack));
-                fingerprint.Append(name).Append('\u001f').Append(stack).Append('\u001e');
+                int stack = Math.Max(0, item.m_stack);
+                if (!aggregateByName.TryGetValue(name, out AggregateEntry aggregate))
+                {
+                    aggregate = new AggregateEntry();
+                    aggregateByName.Add(name, aggregate);
+                }
+
+                aggregate.Stack = (int)Math.Min((long)int.MaxValue, (long)aggregate.Stack + stack);
+                aggregate.SourceStackCount++;
             }
 
-            return fingerprint.ToString();
+            var fingerprint = new StringBuilder();
+            var names = new List<string>(aggregateByName.Keys);
+            names.Sort(StringComparer.Ordinal);
+            foreach (string name in names)
+            {
+                AggregateEntry aggregate = aggregateByName[name];
+                entries.Add(new ChestItemEntry(
+                    Localize(name), aggregate.Stack, aggregate.SourceStackCount));
+                fingerprint.Append(name).Append('\u001f')
+                    .Append(aggregate.Stack).Append('\u001f')
+                    .Append(aggregate.SourceStackCount).Append('\u001e');
+            }
+
+            return fingerprint.Length == 0 ? "empty" : fingerprint.ToString();
+        }
+
+        private sealed class AggregateEntry
+        {
+            internal int Stack;
+            internal int SourceStackCount;
         }
 
         private static int CompareEntriesByName(ChestItemEntry left, ChestItemEntry right)
