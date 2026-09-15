@@ -22,7 +22,15 @@ namespace CatosChestViewer
             if (ModConfig.ShowHeader.Value)
             {
                 string header = Clean(ChestInventoryReader.Localize(container.GetHoverName()));
-                AppendLine(lines, $"<color={HeaderColor}><b>{EscapeRichText(header)}</b></color>", maxCharacters);
+                AppendLine(lines,
+                    $"<color={HeaderColor}><b>{EscapeRichText(header)}</b></color> <color={CountColor}><b>{snapshot.OccupiedSlots}/{snapshot.TotalSlots}</b></color>",
+                    maxCharacters);
+            }
+            else
+            {
+                AppendLine(lines,
+                    $"<color={CountColor}><b>{snapshot.OccupiedSlots}/{snapshot.TotalSlots}</b></color>",
+                    maxCharacters);
             }
 
             int itemLines = 0;

@@ -87,8 +87,9 @@ display clears safely
 - The MVP supports vanilla `Container` chests and any compatible chest that
   exposes Valheim's normal `Container` inventory. Unsupported custom storage
   types are ignored safely.
-- The display shows item display names and stack quantities; empty slots are
-  omitted. Ordering follows inventory slot order for stability.
+- The display shows the used-slot/total-slot count, item display names, and
+  stack quantities; empty slots are omitted. Item rows are alphabetical by
+  localized display name for quick scanning.
 - The display replaces the normal native `Hud.m_hoverName` hover text after
   `Hud.UpdateCrosshair` runs. It is not chat spam, world-space floating text,
   or a chest UI replacement.
@@ -144,7 +145,8 @@ display clears safely
    before reading its inventory. Inaccessible chests retain vanilla hover text
    and never expose contents.
 4. The controller reads the container inventory on the main Unity thread,
-   groups nothing by default, and formats non-empty slots as `Name xCount`.
+   groups nothing by default, displays `UsedSlots/TotalSlots`, and formats
+   non-empty slots alphabetically as `Name xCount`.
 5. A stable target identity plus a lightweight inventory fingerprint prevents
    unnecessary redraws while still refreshing when contents change.
 6. The native `Hud.m_hoverName` text is replaced atomically with the chest
@@ -155,10 +157,10 @@ display clears safely
 Proposed default presentation:
 
 ```text
-Chest
-Wood x20
-Stone x8
+Chest 3/10
 Amber x1
+Stone x8
+Wood x20
 ```
 
 ## 4. Architecture and ownership
@@ -172,13 +174,13 @@ src/CatosChestViewer/
   ModConfig.cs              Configuration bindings and defaults
   ChestTargetController.cs  Native hover target, identity, invalidation, cadence
   ChestInventoryReader.cs   Safe Container/inventory read and fingerprint
-  ChestTextFormatter.cs     Slot ordering, names, counts, truncation
+  ChestTextFormatter.cs     Alphabetical item rows, slot usage, names, counts, truncation
   ChestOverlay.cs           Native Hud.m_hoverName patch and text ownership
   CatosChestViewer.csproj   net48 references and assembly metadata
 scripts/
   setup-references.ps1      Copy game/core references, never commit DLLs
   build.ps1                 Release build
-  package.ps1               Validated Thunderstore archive
+  package.ps1               Validated Thunderstore archive; README screenshots use public URLs
 TEST_SERVER/                Ignored local launcher, config, admin list, state
 ```
 
@@ -348,10 +350,12 @@ world, or log files.
 - [x] Implement `ChestTargetController` with bounded cadence, native
   `Player.GetHoverObject()` chest resolution, target identity, range checks,
   and invalidation.
-- [x] Implement `ChestInventoryReader` using only confirmed read APIs; preserve
-  slot order, omit empty slots, and return an immutable display snapshot.
+- [x] Implement `ChestInventoryReader` using only confirmed read APIs; record
+  used/total grid slots, omit empty slots, sort item rows alphabetically, and
+  return an immutable display snapshot.
 - [x] Implement `ChestTextFormatter` with item display names, stack counts,
-  header/empty text, line and character limits, and safe fallback names.
+  slot-usage header/empty text, line and character limits, and safe fallback
+  names.
 - [ ] Add unit-level tests for empty slots, malformed/null items, duplicate
   item names, truncation, and stable fingerprints where the API permits.
 - [ ] **Verify:** populated and empty chests render in a local client while

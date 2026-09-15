@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1 - 2026-09-15
+
+- Added used-slot/total-slot counts to the chest hover header.
+- Sorted hover-view item stacks alphabetically by localized display name.
+
 ## 0.1.0 - 2026-09-11
 
 - Initial client-only release of CatosChestViewer.

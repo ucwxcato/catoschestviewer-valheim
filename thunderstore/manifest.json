@@ -1,8 +1,8 @@
 {
   "name": "CatosChestViewer",
-  "version_number": "0.1.0",
+  "version_number": "0.1.1",
   "website_url": "https://github.com/ucwxcato/catoschestviewer-valheim",
-  "description": "See localized container contents and item counts while looking at a chest, without opening it.",
+  "description": "See alphabetized localized container contents and used slots while looking at a chest, without opening it.",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2350"
   ]

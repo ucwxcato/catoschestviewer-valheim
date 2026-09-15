@@ -2,9 +2,11 @@
 
 By **Catosaur**.
 
-Client-side mod to see what is inside a chest while looking at it, without opening the container.
+Client-side mod to see what is inside a chest while looking at it, without
+opening the container. Item stacks are alphabetical and the header shows used
+slots out of the container's total slots.
 
-![CatosChestViewer in game](catoschestviewer.png)
+![CatosChestViewer in game](https://raw.githubusercontent.com/ucwxcato/catoschestviewer-valheim/main/thunderstore/catoschestviewer.png)
 
 ## Client-side only
 

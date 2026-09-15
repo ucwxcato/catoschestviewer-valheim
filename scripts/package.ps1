@@ -89,7 +89,6 @@ New-Item -ItemType Directory -Path $packageRoot | Out-Null
 Copy-Item -LiteralPath $dllPath -Destination (Join-Path $packageRoot 'CatosChestViewer.dll')
 Copy-Item -LiteralPath $manifestPath -Destination (Join-Path $packageRoot 'manifest.json')
 Copy-Item -LiteralPath $iconPath -Destination (Join-Path $packageRoot 'icon.png')
-Copy-Item -LiteralPath $screenshotPath -Destination (Join-Path $packageRoot 'catoschestviewer.png')
 Copy-Item -LiteralPath $readmePath -Destination (Join-Path $packageRoot 'README.md')
 Copy-Item -LiteralPath $changelogPath -Destination (Join-Path $packageRoot 'CHANGELOG.md')
 
@@ -97,7 +96,6 @@ $expectedFiles = @(
     'CatosChestViewer.dll',
     'manifest.json',
     'icon.png',
-    'catoschestviewer.png',
     'README.md',
     'CHANGELOG.md'
 )

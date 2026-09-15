@@ -1,7 +1,8 @@
 # CatosChestViewer
 
 CatosChestViewer is a client-side Valheim mod that shows the contents of the
-container under the player's crosshair without opening it.
+container under the player's crosshair without opening it. Its hover view shows
+used slots out of total slots and lists item stacks alphabetically.
 
 ![CatosChestViewer showing localized chest contents](thunderstore/catoschestviewer.png)
 

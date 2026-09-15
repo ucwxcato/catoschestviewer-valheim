@@ -8,13 +8,17 @@ namespace CatosChestViewer
 {
     internal sealed class ChestContentsSnapshot
     {
-        internal ChestContentsSnapshot(List<ChestItemEntry> items, string fingerprint)
+        internal ChestContentsSnapshot(List<ChestItemEntry> items, int occupiedSlots, int totalSlots, string fingerprint)
         {
             Items = items.AsReadOnly();
+            OccupiedSlots = occupiedSlots;
+            TotalSlots = totalSlots;
             Fingerprint = fingerprint;
         }
 
         internal IReadOnlyList<ChestItemEntry> Items { get; }
+        internal int OccupiedSlots { get; }
+        internal int TotalSlots { get; }
         internal string Fingerprint { get; }
     }
 
@@ -50,7 +54,11 @@ namespace CatosChestViewer
                 List<ItemDrop.ItemData> items = inventory.GetAllItemsInGridOrder();
                 var entries = new List<ChestItemEntry>();
                 string fingerprint = BuildFingerprint(items, entries);
-                snapshot = new ChestContentsSnapshot(entries, fingerprint);
+                entries.Sort(CompareEntriesByName);
+
+                int occupiedSlots = Math.Max(0, inventory.NrOfItems());
+                int totalSlots = GetTotalSlots(inventory, occupiedSlots);
+                snapshot = new ChestContentsSnapshot(entries, occupiedSlots, totalSlots, fingerprint);
                 return true;
             }
             catch (Exception ex)
@@ -80,6 +88,26 @@ namespace CatosChestViewer
             }
 
             return fingerprint.ToString();
+        }
+
+        private static int CompareEntriesByName(ChestItemEntry left, ChestItemEntry right)
+        {
+            int localizedComparison = StringComparer.CurrentCultureIgnoreCase.Compare(left.Name, right.Name);
+            return localizedComparison != 0
+                ? localizedComparison
+                : StringComparer.Ordinal.Compare(left.Name, right.Name);
+        }
+
+        private static int GetTotalSlots(Inventory inventory, int occupiedSlots)
+        {
+            int width = Math.Max(0, inventory.GetWidth());
+            int height = Math.Max(0, inventory.GetHeight());
+            long gridSlots = (long)width * height;
+
+            // A compatible container should always expose a positive grid size.
+            // Keep the displayed denominator meaningful if one reports an invalid
+            // size while still containing stacks.
+            return (int)Math.Min(int.MaxValue, Math.Max(gridSlots, (long)occupiedSlots));
         }
 
         internal static string Localize(string value)
