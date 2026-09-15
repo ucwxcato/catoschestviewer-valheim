@@ -43,9 +43,3 @@ BepInExPack Valheim `5.4.2350` is required.
 
 The mod creates its configuration at
 `BepInEx/config/com.catosaur.catoschestviewer.cfg`.
-
-## Compatibility
-
-Validated against Valheim `1.0.7` / network version `39`. The mod is guarded
-to load only in the Valheim client process and does not load in
-`valheim_server.exe`.
