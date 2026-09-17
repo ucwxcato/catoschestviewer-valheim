@@ -10,6 +10,7 @@ namespace CatosChestViewer
         internal static ConfigEntry<int> MaxTextCharacters;
         internal static ConfigEntry<bool> ShowHeader;
         internal static ConfigEntry<bool> ShowStackCount;
+        internal static ConfigEntry<bool> StashSenseEnabled;
         internal static ConfigEntry<bool> ShowEmptyMessage;
         internal static ConfigEntry<string> EmptyMessage;
 
@@ -30,6 +31,8 @@ namespace CatosChestViewer
                 "Show the chest name above the contents.");
             ShowStackCount = config.Bind("Display", "ShowStackCount", true,
                 "Show how many source stacks contributed to aggregated item rows.");
+            StashSenseEnabled = config.Bind("Stash Sense", "Enabled", true,
+                "Highlight chest items that are also present in your local inventory.");
             ShowEmptyMessage = config.Bind("Display", "ShowEmptyMessage", true,
                 "Show Empty when the targeted chest has no items.");
             EmptyMessage = config.Bind("Display", "EmptyMessage", "Empty",

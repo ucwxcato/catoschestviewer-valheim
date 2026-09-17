@@ -35,6 +35,23 @@ The source-stack detail can be disabled with `ShowStackCount` in the generated
 configuration file. Stack counts are shown only when an item occupies multiple
 source stacks.
 
+## Stash Sense (optional)
+
+**Stash Sense** helps with quick organization. When you hover a chest, it highlights
+each chest item that is also present in your own inventory, making suitable
+storage easy to spot at a glance. It is enabled by default; use the
+matching-row highlight to find the right chest, or turn it off in the generated
+config:
+
+```ini
+[Stash Sense]
+Enabled = false
+```
+
+Stash Sense only changes the local hover text; it never moves, sorts, opens, or
+otherwise changes items. It is client-side and does not require other players
+or the server to install the mod.
+
 ## Installation
 
 Install the Thunderstore package with a Valheim mod manager, or place

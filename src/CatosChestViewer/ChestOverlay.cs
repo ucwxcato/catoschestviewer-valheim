@@ -37,7 +37,7 @@ namespace CatosChestViewer
             if (targetChanged || now >= _nextReadTime)
             {
                 _nextReadTime = now + Math.Max(0.025f, ModConfig.UpdateIntervalMs.Value / 1000f);
-                if (!ChestInventoryReader.TryRead(target, out ChestContentsSnapshot snapshot))
+                if (!ChestInventoryReader.TryRead(target, player, out ChestContentsSnapshot snapshot))
                 {
                     Clear();
                     return;

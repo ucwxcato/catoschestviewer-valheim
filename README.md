@@ -2,7 +2,8 @@
 
 CatosChestViewer is a client-side Valheim mod that shows the contents of the
 container under the player's crosshair without opening it. Its hover view shows
-used slots out of total slots and lists item stacks alphabetically.
+used slots out of total slots and lists item stacks alphabetically. Optional
+**Stash Sense** highlights things you are carrying that belong in that chest.
 
 ![CatosChestViewer showing localized chest contents](thunderstore/catoschestviewer.png)
 
@@ -21,6 +22,21 @@ its own local hover display from the container it is looking at.
 
 The generated configuration is located at
 `BepInEx/config/com.catosaur.catoschestviewer.cfg`.
+
+## Stash Sense (optional)
+
+Stash Sense is enabled by default and gives matching chest rows a bright
+highlight whenever you carry the same item type. This makes it easy to spot
+where a stack belongs without opening every chest.
+
+```ini
+[Stash Sense]
+Enabled = true
+```
+
+Stash Sense only changes the local hover text; it never moves, sorts, opens, or
+otherwise changes items. It does not need to be installed on a server or by
+other players.
 
 ## Development
 

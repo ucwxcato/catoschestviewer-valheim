@@ -24,16 +24,18 @@ namespace CatosChestViewer
 
     internal sealed class ChestItemEntry
     {
-        internal ChestItemEntry(string name, int stack, int sourceStackCount)
+        internal ChestItemEntry(string name, int stack, int sourceStackCount, bool matchesPlayerInventory)
         {
             Name = name;
             Stack = stack;
             SourceStackCount = sourceStackCount;
+            MatchesPlayerInventory = matchesPlayerInventory;
         }
 
         internal string Name { get; }
         internal int Stack { get; }
         internal int SourceStackCount { get; }
+        internal bool MatchesPlayerInventory { get; }
     }
 
     internal static class ChestInventoryReader
@@ -43,7 +45,7 @@ namespace CatosChestViewer
         private static MethodInfo _localizeMethod;
         private static float _nextReadWarningTime;
 
-        internal static bool TryRead(Container container, out ChestContentsSnapshot snapshot)
+        internal static bool TryRead(Container container, Player player, out ChestContentsSnapshot snapshot)
         {
             snapshot = null;
             if (!container) return false;
@@ -55,7 +57,8 @@ namespace CatosChestViewer
 
                 List<ItemDrop.ItemData> items = inventory.GetAllItemsInGridOrder();
                 var entries = new List<ChestItemEntry>();
-                string fingerprint = BuildFingerprint(items, entries);
+                HashSet<string> playerItemKeys = GetPlayerItemKeys(player);
+                string fingerprint = BuildFingerprint(items, entries, playerItemKeys);
                 entries.Sort(CompareEntriesByName);
 
                 int occupiedSlots = Math.Max(0, inventory.NrOfItems());
@@ -74,9 +77,13 @@ namespace CatosChestViewer
             }
         }
 
-        private static string BuildFingerprint(List<ItemDrop.ItemData> items, List<ChestItemEntry> entries)
+        private static string BuildFingerprint(
+            List<ItemDrop.ItemData> items,
+            List<ChestItemEntry> entries,
+            HashSet<string> playerItemKeys)
         {
-            if (items == null || items.Count == 0) return "empty";
+            string modeFingerprint = ModConfig.StashSenseEnabled.Value ? "stash-sense-on" : "stash-sense-off";
+            if (items == null || items.Count == 0) return modeFingerprint + "|empty";
 
             var aggregateByName = new Dictionary<string, AggregateEntry>(StringComparer.Ordinal);
             foreach (ItemDrop.ItemData item in items)
@@ -101,14 +108,38 @@ namespace CatosChestViewer
             foreach (string name in names)
             {
                 AggregateEntry aggregate = aggregateByName[name];
+                bool matchesPlayerInventory = ModConfig.StashSenseEnabled.Value && playerItemKeys.Contains(name);
                 entries.Add(new ChestItemEntry(
-                    Localize(name), aggregate.Stack, aggregate.SourceStackCount));
+                    Localize(name), aggregate.Stack, aggregate.SourceStackCount, matchesPlayerInventory));
                 fingerprint.Append(name).Append('\u001f')
                     .Append(aggregate.Stack).Append('\u001f')
-                    .Append(aggregate.SourceStackCount).Append('\u001e');
+                    .Append(aggregate.SourceStackCount).Append('\u001f')
+                    .Append(matchesPlayerInventory ? '1' : '0').Append('\u001e');
             }
 
-            return fingerprint.Length == 0 ? "empty" : fingerprint.ToString();
+            return fingerprint.Length == 0
+                ? modeFingerprint + "|empty"
+                : modeFingerprint + "|" + fingerprint;
+        }
+
+        private static HashSet<string> GetPlayerItemKeys(Player player)
+        {
+            var itemKeys = new HashSet<string>(StringComparer.Ordinal);
+            if (!ModConfig.StashSenseEnabled.Value || !player) return itemKeys;
+
+            Inventory inventory = player.GetInventory();
+            if (inventory == null) return itemKeys;
+
+            List<ItemDrop.ItemData> items = inventory.GetAllItemsInGridOrder();
+            if (items == null) return itemKeys;
+
+            foreach (ItemDrop.ItemData item in items)
+            {
+                if (item?.m_shared == null || string.IsNullOrWhiteSpace(item.m_shared.m_name)) continue;
+                itemKeys.Add(item.m_shared.m_name);
+            }
+
+            return itemKeys;
         }
 
         private sealed class AggregateEntry

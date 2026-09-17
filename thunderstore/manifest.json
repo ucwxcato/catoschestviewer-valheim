@@ -1,8 +1,8 @@
 {
   "name": "CatosChestViewer",
-  "version_number": "0.1.2",
+  "version_number": "0.1.3",
   "website_url": "https://github.com/ucwxcato/catoschestviewer-valheim",
-  "description": "See alphabetized localized container contents and used slots while looking at a chest, without opening it.",
+  "description": "See chest contents and use optional Stash Sense highlights while looking at a chest.",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2350"
   ]

@@ -2,7 +2,9 @@
 
 > **Status:** Phase 0 and the Phase 1 scaffold are complete. Phase 2 targeting,
 > read, formatting, and native-HUD integration are implemented, compiled, and
-> deployed to the client profile. Gameplay behavior is not yet verified.
+> deployed to the client profile. Stash Sense highlighting is authored and
+> compiles successfully, but is not yet gameplay-verified. Gameplay behavior
+> is not yet verified.
 >
 > **Purpose:** Show the contents of the chest currently under the local
 > player's crosshair as simple text without opening the chest.
@@ -61,24 +63,26 @@ second overlay lifecycle. The planned Harmony hook is a postfix on
 
 ## 0. Outcome
 
-When the player aims at a chest, the mod performs a read-only local lookup and
-renders a compact text panel containing the chest's current item names and
-stack counts. The panel disappears or updates as the target changes. Looking
-at a chest alone never opens it, moves items, sends an inventory mutation, or
-requires an admin role.
+When the player aims at a chest, the mod renders a compact local text panel
+containing the chest's current item names and stack counts. The optional Stash
+Sense mode highlights rows for item types also held by the local player.
+Looking at a chest alone never moves items or requires an admin role.
 
 Complete when:
 
 ```text
 local player in range -> crosshair targets a chest -> contents are read ->
-readable item/count text appears -> target changes or becomes invalid ->
-display clears safely
+readable item/count text appears -> optional Stash Sense highlights matches ->
+target changes or becomes invalid -> display clears safely
 ```
 
 ## 1. Locked decisions
 
-- The MVP is read-only and local-client rendered. It does not open the chest
-  or alter inventory state.
+- The normal hover display is read-only and local-client rendered. It does not
+  open the chest or alter inventory state merely by aiming at it.
+- **Stash Sense** is an optional mode, enabled by default. It compares the
+  local player's and hovered chest's stable Valheim item-name keys, then uses a
+  distinct hover-text color for matching chest rows.
 - The plugin is client-only. The dedicated server does not install, load, or
   require `CatosChestViewer.dll`; other players do not need the mod.
 - Targeting is based on the local player's look ray/crosshair and a bounded
@@ -116,6 +120,8 @@ display clears safely
 
 - Detect the chest under the local crosshair at a safe, configurable cadence.
 - Read and format the current inventory without opening or mutating it.
+- Optionally highlight chest rows whose stable item key is present in the
+  local player's inventory.
 - Update quickly when the target chest or its contents change.
 - Clear stale text when the target is invalid, out of range, destroyed, or no
   longer a supported container.
@@ -152,10 +158,13 @@ display clears safely
 4. The controller reads the container inventory on the main Unity thread,
    aggregates duplicate stacks, displays `UsedSlots/TotalSlots`, and formats
    non-empty rows according to the configured sort mode as `Name xTotal`.
-5. A stable target identity plus a lightweight inventory fingerprint prevents
+5. If Stash Sense is enabled, the reader snapshots local player item-name keys
+   for this single formatting pass. Matching chest rows use the Stash Sense
+   accent color; no inventory mutation occurs while merely hovering.
+6. A stable target identity plus a lightweight inventory fingerprint prevents
    unnecessary redraws while still refreshing when contents, slot counts, or
    display-relevant configuration changes.
-6. The native `Hud.m_hoverName` text is replaced atomically with the chest
+7. The native `Hud.m_hoverName` text is replaced atomically with the chest
    listing. On target loss,
    destruction, exception, or scene transition it is cleared and the cached
    target is discarded.
@@ -195,8 +204,8 @@ Ownership boundaries:
 - `Plugin` owns BepInEx registration, logging, config initialization, and
   disposal. Harmony patches are optional and must not be used when the normal
   update/UI lifecycle is sufficient.
-- `ChestTargetController` owns only target selection and cache invalidation;
-  it must not format UI or mutate inventories.
+- `ChestTargetController` owns only target selection and access checks; it
+  must not format UI or mutate inventories.
 - `ChestInventoryReader` owns read-only extraction from the confirmed Valheim
   `Container`/`Inventory` API. It must not call open, remove, add, or RPC
   methods.
@@ -254,6 +263,9 @@ ShowSlotCount = true
 SortMode = Alphabetical
 ShowStackCount = true
 ShowMalformedItems = false
+
+[Stash Sense]
+Enabled = true
 ```
 
 The native interaction distance and HUD placement are confirmed in Phase 0;
@@ -277,6 +289,10 @@ Display configuration semantics:
   inventory entries are represented as `Unknown item` with a safe count or
   placeholder. They are never dereferenced after the read and are not logged
   with inventory contents.
+- `Stash Sense.Enabled` defaults to true. When true, matching chest rows use
+  the fixed high-contrast Stash Sense accent. A match is a stable
+  `ItemData.m_shared.m_name` key found in the local player's current inventory,
+  not a comparison of localized text.
 
 There is no permission gate for the read-only display. The client-only test
 server still uses the sibling project's admin setup for operational
@@ -323,6 +339,8 @@ world, or log files.
 | Native modded container (for example modded iron chest) | Displays correctly if it exposes compatible `Container` behavior; otherwise safely ignored | Per-mod gameplay test and compatibility note |
 | Malformed/null inventory entry | No exception or stale data; hidden by default or shown as `Unknown item` when configured | Controlled test or unit-level test |
 | Display configuration variants | Name, slot count, sorting, stack detail, and malformed-item options match config | Manual config matrix |
+| Stash Sense disabled | No matching-row accent and no inventory mutation | Manual check before/after item counts |
+| Stash Sense matching | Only chest rows with a matching stable player item key receive the accent | Manual check with matching and non-matching rows |
 | Two clients target chests | Each client sees only its own local target | Two-client test; no new RPCs |
 | Repeated malformed/read failures | Game continues; warning is throttled | Log inspection |
 | Server launch/admin format | Server starts with active-save `V_...` admin file | Launcher output and save-dir file evidence |
@@ -373,7 +391,7 @@ world, or log files.
   test-server state are ignored; static launcher checks show client-only
   deployment and use of the existing external world.
 
-### Phase 2 — Read-only chest targeting and formatting
+### Phase 2 — Chest targeting, formatting, and Stash Sense
 
 - [x] Implement `ChestTargetController` with bounded cadence, native
   `Player.GetHoverObject()` chest resolution, target identity, range checks,
@@ -399,6 +417,11 @@ world, or log files.
 - [ ] Add unit-level tests for empty slots, malformed/null items, duplicate
   item names, duplicate stacks, configured sorting, truncation, malformed-item
   display, and stable fingerprints including slot counts where the API permits.
+- [ ] Add `Stash Sense.Enabled` (default true) and matching-row snapshot/
+  formatting support using stable item keys, with a fingerprint that refreshes
+  when player matches or mode state changes.
+- [ ] Add tests for disabled mode, no-match behavior, and player inventory
+  changes while a chest remains targeted.
 
 ### Phase 3 — Overlay lifecycle and integration hardening
 
@@ -409,7 +432,8 @@ world, or log files.
   failures without logging contents.
 - [ ] Verify multiplayer behavior with a matching but unmodded dedicated
   server and one or more modded clients; confirm other clients do not need the
-  plugin, no custom network RPC is introduced, and no inventory mutation occurs.
+  plugin, no custom network RPC is introduced, hover rendering stays local,
+  and no inventory mutation occurs.
 - [ ] **Verify:** complete the verification matrix's gameplay, failure, and
   two-client scenarios with clean BepInEx logs.
 
@@ -433,6 +457,9 @@ world, or log files.
   includes the chest name.
 - [ ] Tune aggregated-row wording, optional source-stack detail, quantity sort,
   and malformed-item placeholder after manual testing.
+- [ ] Confirm the Stash Sense accent is readable against every supported HUD
+  theme and remains distinguishable from ordinary item rows after gameplay
+  verification.
 - [ ] Test native modded containers that expose `Container` (including the
   current modded iron-chest target) and document which ones work; do not claim
   broad custom-storage support from type inspection alone.

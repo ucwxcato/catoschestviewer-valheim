@@ -10,6 +10,7 @@ namespace CatosChestViewer
         private const string HeaderColor = "#FFD166FF";
         private const string NameColor = "#F2F5FFFF";
         private const string CountColor = "#7CFFB2FF";
+        private const string StashSenseColor = "#FFF06AFF";
 
         internal static string Format(Container container, ChestContentsSnapshot snapshot)
         {
@@ -41,7 +42,10 @@ namespace CatosChestViewer
                 string stackDetail = ModConfig.ShowStackCount.Value && item.SourceStackCount > 1
                     ? $" ({item.SourceStackCount} stacks)"
                     : string.Empty;
-                string line = $"<color={NameColor}>{itemName}</color> <color={CountColor}><b>x{Math.Max(0, item.Stack)}</b></color>{stackDetail}";
+                string nameColor = ModConfig.StashSenseEnabled.Value && item.MatchesPlayerInventory
+                    ? StashSenseColor
+                    : NameColor;
+                string line = $"<color={nameColor}><b>{itemName}</b></color> <color={CountColor}><b>x{Math.Max(0, item.Stack)}</b></color>{stackDetail}";
                 if (!AppendLine(lines, line, maxCharacters)) break;
                 itemLines++;
             }

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added optional **Stash Sense** mode. When enabled, it highlights chest rows
+  for item types also held in the local player's inventory.
+
 ## 0.1.2 - 2026-09-15
 
 - Added configurable source-stack details to aggregated item rows.
